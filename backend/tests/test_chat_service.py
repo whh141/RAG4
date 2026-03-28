@@ -2,60 +2,10 @@
 
 from __future__ import annotations
 
-import sys
-import types
 import unittest
 from typing import Any
 
-if "fastapi" not in sys.modules:
-    fastapi_stub = types.ModuleType("fastapi")
-
-    class HTTPException(Exception):
-        def __init__(self, status_code: int, detail: str) -> None:
-            super().__init__(detail)
-            self.status_code = status_code
-            self.detail = detail
-
-    class _Status:
-        HTTP_400_BAD_REQUEST = 400
-        HTTP_500_INTERNAL_SERVER_ERROR = 500
-
-    fastapi_stub.HTTPException = HTTPException
-    fastapi_stub.status = _Status()
-    sys.modules["fastapi"] = fastapi_stub
-else:
-    from fastapi import HTTPException  # type: ignore[no-redef]
-
-if "app.core.graph" not in sys.modules:
-    graph_stub = types.ModuleType("app.core.graph")
-
-    class _PlaceholderGraph:
-        async def astream_events(self, _state_input: dict[str, Any], version: str):
-            if version != "v2":
-                raise ValueError("unexpected stream version")
-            if False:
-                yield {}
-
-    graph_stub.GRAPH = _PlaceholderGraph()
-    sys.modules["app.core.graph"] = graph_stub
-
-if "app.core.state" not in sys.modules:
-    state_stub = types.ModuleType("app.core.state")
-
-    class IntentType:
-        LOCAL = "LOCAL"
-
-    state_stub.IntentType = IntentType
-    sys.modules["app.core.state"] = state_stub
-
-if "app.db.sqlite_mgr" not in sys.modules:
-    sqlite_stub = types.ModuleType("app.db.sqlite_mgr")
-
-    class SQLiteManager:  # pragma: no cover - placeholder for import typing
-        pass
-
-    sqlite_stub.SQLiteManager = SQLiteManager
-    sys.modules["app.db.sqlite_mgr"] = sqlite_stub
+from fastapi import HTTPException
 
 from app.services import chat_service as chat_service_module
 from app.services.chat_service import ChatService
