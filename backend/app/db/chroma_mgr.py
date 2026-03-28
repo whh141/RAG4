@@ -16,10 +16,11 @@ class ChromaManager:
 
     def __init__(
         self,
-        persist_directory: str = "backend/data/chromadb",
+        persist_directory: str | None = None,
         collection_name: str = "kb_documents",
     ) -> None:
-        self.persist_directory = Path(persist_directory)
+        default_dir = Path(__file__).resolve().parents[2] / "data" / "chromadb"
+        self.persist_directory = Path(persist_directory) if persist_directory is not None else default_dir
         self.persist_directory.mkdir(parents=True, exist_ok=True)
 
         self.client = chromadb.PersistentClient(

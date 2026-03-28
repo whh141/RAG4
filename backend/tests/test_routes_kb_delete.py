@@ -98,6 +98,7 @@ class FakeSQLite:
     def __init__(self, doc: Doc) -> None:
         self.doc = doc
         self.deleted: list[str] = []
+        self.status_updates: list[tuple[str, str]] = []
 
     def get_document(self, file_id: str) -> Doc:
         if file_id != self.doc.id:
@@ -106,6 +107,13 @@ class FakeSQLite:
 
     def delete_document(self, file_id: str) -> None:
         self.deleted.append(file_id)
+
+    def update_document_status(self, file_id: str, *, status: str, chunk_count: int | None = None) -> Doc:
+        if file_id != self.doc.id:
+            raise ValueError("Document not found")
+        self.doc.status = status
+        self.status_updates.append((file_id, status))
+        return self.doc
 
 
 class FakeChroma:
@@ -131,14 +139,15 @@ class DeleteRouteTests(unittest.TestCase):
         self.assertEqual(routes_kb.sqlite_mgr.deleted, ["d1"])
         self.assertEqual(routes_kb.chroma_mgr.deleted, [])
 
-    def test_delete_completed_document_without_vectors_raises(self) -> None:
+    def test_delete_completed_document_without_vectors_succeeds(self) -> None:
         routes_kb.sqlite_mgr = FakeSQLite(Doc("d2", "completed"))
         routes_kb.chroma_mgr = FakeChroma([])
 
-        with self.assertRaises(HTTPException):
-            routes_kb.delete_document("d2")
+        response = routes_kb.delete_document("d2")
 
-        self.assertEqual(routes_kb.sqlite_mgr.deleted, [])
+        self.assertEqual(response["status"], "deleted")
+        self.assertEqual(routes_kb.sqlite_mgr.status_updates, [("d2", "deleting")])
+        self.assertEqual(routes_kb.sqlite_mgr.deleted, ["d2"])
 
     def test_delete_document_with_vectors_deletes_both(self) -> None:
         routes_kb.sqlite_mgr = FakeSQLite(Doc("d3", "completed"))

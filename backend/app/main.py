@@ -5,9 +5,9 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes_chat import router as chat_router
-from app.api.routes_kb import router as kb_router
-from app.db.sqlite_mgr import SQLiteManager
+from .api.routes_chat import router as chat_router
+from .api.routes_kb import router as kb_router
+from .db.sqlite_mgr import SQLiteManager
 
 app = FastAPI(title="Agentic RAG System", version="0.1.0")
 

@@ -75,8 +75,9 @@ class Message(Base):
 class SQLiteManager:
     """Database access layer for documents, sessions, and messages."""
 
-    def __init__(self, db_path: str = "backend/data/sqlite.db") -> None:
-        db_file = Path(db_path)
+    def __init__(self, db_path: str | None = None) -> None:
+        default_db = Path(__file__).resolve().parents[2] / "data" / "sqlite.db"
+        db_file = Path(db_path) if db_path is not None else default_db
         db_file.parent.mkdir(parents=True, exist_ok=True)
 
         self.engine = create_engine(

@@ -71,7 +71,13 @@ def delete_document(file_id: str) -> dict[str, str]:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
     try:
-        _delete_kb_record_and_vectors(file_id=file_id, document_status=document.status)
+        if document.status == "completed":
+            sqlite_mgr.update_document_status(file_id, status="deleting")
+            current_status = "deleting"
+        else:
+            current_status = document.status
+
+        _delete_kb_record_and_vectors(file_id=file_id, document_status=current_status)
     except HTTPException:
         raise
     except Exception as exc:
@@ -89,10 +95,10 @@ def _delete_kb_record_and_vectors(*, file_id: str, document_status: str) -> None
 
     if existing_ids:
         chroma_mgr.delete_chunks_by_document_id(file_id)
-    elif document_status == "completed":
+    elif document_status not in {"error", "processing", "deleting"}:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Vector data missing for completed document {file_id}.",
+            detail=f"Vector data missing for unexpected document status={document_status}, file_id={file_id}.",
         )
 
     sqlite_mgr.delete_document(file_id)
