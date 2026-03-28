@@ -1,0 +1,15 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+sqlalchemy==2.0.38
+pydantic==2.11.1
+python-dotenv==1.0.1
+python-multipart==0.0.20
+chromadb==0.6.3
+langchain==0.3.21
+langgraph==0.3.18
+langchain-openai==0.3.10
+langchain-community==0.3.20
+tavily-python==0.5.1
+httpx==0.28.1
+orjson==3.10.15
+pypdf==5.4.0
