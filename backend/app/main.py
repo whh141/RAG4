@@ -25,7 +25,6 @@ app.include_router(chat_router)
 
 @app.on_event("startup")
 def on_startup() -> None:
-    """Initialize SQLite tables before serving traffic."""
     SQLiteManager().init_db()
 
 

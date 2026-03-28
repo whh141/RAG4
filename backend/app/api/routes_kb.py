@@ -17,7 +17,6 @@ document_processor = build_document_processor()
 
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
 async def upload_document(file: UploadFile) -> dict[str, str | int]:
-    """Upload a knowledge file, process it, and perform dual-write persistence."""
     try:
         return await document_processor.process_upload(file)
     except HTTPException:
@@ -34,7 +33,6 @@ def list_documents(
     limit: int = Query(default=20, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
 ) -> dict[str, object]:
-    """List uploaded documents for admin panel table rendering."""
     try:
         total = sqlite_mgr.count_documents()
         paged_rows = sqlite_mgr.list_documents_paginated(limit=limit, offset=offset)
@@ -64,18 +62,16 @@ def list_documents(
 
 @router.delete("/files/{file_id}", status_code=status.HTTP_200_OK)
 def delete_document(file_id: str) -> dict[str, str]:
-    """Delete KB record and its vectors using strict dual-delete semantics."""
     try:
         document = sqlite_mgr.get_document(file_id)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
     try:
-        if document.status == "completed":
+        current_status = document.status
+        if current_status == "completed":
             sqlite_mgr.update_document_status(file_id, status="deleting")
             current_status = "deleting"
-        else:
-            current_status = document.status
 
         _delete_kb_record_and_vectors(file_id=file_id, document_status=current_status)
     except HTTPException:

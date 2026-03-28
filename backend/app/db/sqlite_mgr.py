@@ -25,9 +25,7 @@ class Document(Base):
     file_name: Mapped[str] = mapped_column(String(512), nullable=False, unique=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False)
     chunk_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=False), nullable=False, default=datetime.utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=False), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
     )
@@ -40,9 +38,7 @@ class SessionRecord(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     title: Mapped[str] = mapped_column(String(255), nullable=False, default="New Chat")
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=False), nullable=False, default=datetime.utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=False), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
     )
@@ -94,12 +90,10 @@ class SQLiteManager:
         )
 
     def init_db(self) -> None:
-        """Create all required tables if they do not exist."""
         Base.metadata.create_all(self.engine)
 
     @contextmanager
     def session_scope(self) -> Iterator[Session]:
-        """Transactional SQLAlchemy session context manager."""
         session = self.session_factory()
         try:
             yield session
@@ -110,7 +104,6 @@ class SQLiteManager:
         finally:
             session.close()
 
-    # ---------- Document metadata CRUD ----------
     def create_document(self, file_name: str, status: str, chunk_count: int) -> Document:
         with self.session_scope() as session:
             document = Document(file_name=file_name, status=status, chunk_count=chunk_count)
@@ -119,13 +112,7 @@ class SQLiteManager:
             session.refresh(document)
             return document
 
-    def update_document_status(
-        self,
-        document_id: str,
-        *,
-        status: str,
-        chunk_count: int | None = None,
-    ) -> Document:
+    def update_document_status(self, document_id: str, *, status: str, chunk_count: int | None = None) -> Document:
         with self.session_scope() as session:
             document = session.get(Document, document_id)
             if document is None:
@@ -181,7 +168,6 @@ class SQLiteManager:
                 raise ValueError(f"Document not found for id={document_id}")
             session.delete(document)
 
-    # ---------- Session and message CRUD ----------
     def create_session(self, title: str = "New Chat") -> SessionRecord:
         with self.session_scope() as session:
             record = SessionRecord(title=title)
@@ -218,12 +204,9 @@ class SQLiteManager:
 
             message = Message(session_id=session_id, role=role, content=content)
             session.add(message)
-
-            # Force session updated_at update on message append.
             session.query(SessionRecord).filter(SessionRecord.id == session_id).update(
                 {SessionRecord.updated_at: func.now()}, synchronize_session=False
             )
-
             session.flush()
             session.refresh(message)
             return message
@@ -249,10 +232,4 @@ class SQLiteManager:
             session.delete(record)
 
 
-__all__ = [
-    "Base",
-    "Document",
-    "SessionRecord",
-    "Message",
-    "SQLiteManager",
-]
+__all__ = ["Base", "Document", "SessionRecord", "Message", "SQLiteManager"]
