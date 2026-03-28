@@ -2,9 +2,88 @@
 
 from __future__ import annotations
 
+import sys
+import types
 import unittest
 
-from fastapi import HTTPException
+fastapi_stub = sys.modules.get("fastapi")
+if fastapi_stub is None:
+    fastapi_stub = types.ModuleType("fastapi")
+    sys.modules["fastapi"] = fastapi_stub
+
+
+class HTTPException(Exception):
+    def __init__(self, status_code: int, detail: str) -> None:
+        super().__init__(detail)
+        self.status_code = status_code
+        self.detail = detail
+
+
+class _Status:
+    HTTP_200_OK = 200
+    HTTP_201_CREATED = 201
+    HTTP_404_NOT_FOUND = 404
+    HTTP_500_INTERNAL_SERVER_ERROR = 500
+
+
+class APIRouter:
+    def __init__(self, *args, **kwargs) -> None:  # noqa: ANN002, ANN003
+        pass
+
+    def post(self, *args, **kwargs):  # noqa: ANN002, ANN003
+        return lambda fn: fn
+
+    def get(self, *args, **kwargs):  # noqa: ANN002, ANN003
+        return lambda fn: fn
+
+    def delete(self, *args, **kwargs):  # noqa: ANN002, ANN003
+        return lambda fn: fn
+
+
+def Query(*args, **kwargs):  # noqa: N802, ANN002, ANN003
+    return kwargs.get("default")
+
+
+class UploadFile:  # pragma: no cover - placeholder
+    pass
+
+
+fastapi_stub.HTTPException = HTTPException
+fastapi_stub.status = _Status()
+fastapi_stub.APIRouter = APIRouter
+fastapi_stub.Query = Query
+fastapi_stub.UploadFile = UploadFile
+
+if "app.db.chroma_mgr" not in sys.modules:
+    chroma_stub = types.ModuleType("app.db.chroma_mgr")
+
+    class ChromaManager:  # pragma: no cover
+        pass
+
+    chroma_stub.ChromaManager = ChromaManager
+    sys.modules["app.db.chroma_mgr"] = chroma_stub
+
+if "app.db.sqlite_mgr" not in sys.modules:
+    sqlite_stub = types.ModuleType("app.db.sqlite_mgr")
+
+    class SQLiteManager:  # pragma: no cover
+        pass
+
+    sqlite_stub.SQLiteManager = SQLiteManager
+    sys.modules["app.db.sqlite_mgr"] = sqlite_stub
+
+if "app.services.document_processor" not in sys.modules:
+    doc_stub = types.ModuleType("app.services.document_processor")
+
+    def build_document_processor():  # pragma: no cover
+        class _Processor:
+            async def process_upload(self, _file):
+                return {}
+
+        return _Processor()
+
+    doc_stub.build_document_processor = build_document_processor
+    sys.modules["app.services.document_processor"] = doc_stub
 
 from app.api import routes_kb
 
