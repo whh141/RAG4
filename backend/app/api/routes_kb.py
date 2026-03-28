@@ -66,13 +66,25 @@ def list_documents(
 def delete_document(file_id: str) -> dict[str, str]:
     """Delete KB record and its vectors using strict dual-delete semantics."""
     try:
-        sqlite_mgr.get_document(file_id)
+        document = sqlite_mgr.get_document(file_id)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
     try:
-        chroma_mgr.delete_chunks_by_document_id(file_id)
+        existing = chroma_mgr.get_by_document_id(file_id)
+        existing_ids = existing.get("ids") or []
+
+        if existing_ids:
+            chroma_mgr.delete_chunks_by_document_id(file_id)
+        elif document.status == "completed":
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Vector data missing for completed document {file_id}.",
+            )
+
         sqlite_mgr.delete_document(file_id)
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

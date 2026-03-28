@@ -52,6 +52,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import { createChatSocket } from '../services/chatSocket'
 
 const sessionId = crypto.randomUUID()
@@ -73,6 +74,11 @@ const answerText = computed(() => {
 
 const messages = ref([])
 
+function toSafeMarkdownHtml(text) {
+  const rawHtml = marked.parse(text)
+  return DOMPurify.sanitize(rawHtml)
+}
+
 async function sendQuery() {
   const content = query.value.trim()
   if (!content || loading.value) return
@@ -84,7 +90,7 @@ async function sendQuery() {
   messages.value.push({
     id: crypto.randomUUID(),
     role: 'user',
-    rendered: marked.parse(content)
+    rendered: toSafeMarkdownHtml(content)
   })
 
   const ws = createChatSocket(sessionId)
@@ -106,7 +112,7 @@ async function sendQuery() {
     messages.value.push({
       id: crypto.randomUUID(),
       role: 'assistant',
-      rendered: marked.parse(finalAnswer)
+      rendered: toSafeMarkdownHtml(finalAnswer)
     })
     loading.value = false
   }
