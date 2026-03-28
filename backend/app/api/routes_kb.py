@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query, UploadFile, status
 
-from app.db.chroma_mgr import ChromaManager
-from app.db.sqlite_mgr import SQLiteManager
-from app.services.document_processor import build_document_processor
+from ..db.chroma_mgr import ChromaManager
+from ..db.sqlite_mgr import SQLiteManager
+from ..services.document_processor import build_document_processor
 
 router = APIRouter(prefix="/api/kb", tags=["knowledge-base"])
 

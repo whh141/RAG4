@@ -6,9 +6,9 @@ from typing import Any, AsyncIterator
 
 from fastapi import HTTPException, status
 
-from app.core.graph import GRAPH
-from app.core.state import IntentType
-from app.db.sqlite_mgr import SQLiteManager
+from ..core.graph import GRAPH
+from ..core.state import IntentType
+from ..db.sqlite_mgr import SQLiteManager
 
 
 class ChatService:
