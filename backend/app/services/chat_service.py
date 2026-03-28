@@ -83,17 +83,11 @@ class ChatService:
                 detail="Graph execution ended without final_answer.",
             )
 
-        if not emitted_answer_text:
-            yield {"type": "token", "content": final_answer}
-        elif final_answer != emitted_answer_text:
-            if not final_answer.startswith(emitted_answer_text):
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Streamed token content does not match final_answer.",
-                )
-            remaining = final_answer[len(emitted_answer_text) :]
-            if remaining:
-                yield {"type": "token", "content": remaining}
+        async for packet in self._emit_missing_final_tokens(
+            final_answer=final_answer,
+            emitted_answer_text=emitted_answer_text,
+        ):
+            yield packet
 
         self.sqlite_mgr.append_message(session_id=session_id, role="assistant", content=final_answer)
 
@@ -126,6 +120,29 @@ class ChatService:
                 if extracted:
                     return extracted
         return ""
+
+    async def _emit_missing_final_tokens(
+        self,
+        *,
+        final_answer: str,
+        emitted_answer_text: str,
+    ) -> AsyncIterator[dict[str, str]]:
+        if not emitted_answer_text:
+            yield {"type": "token", "content": final_answer}
+            return
+
+        if final_answer == emitted_answer_text:
+            return
+
+        if not final_answer.startswith(emitted_answer_text):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Streamed token content does not match final_answer.",
+            )
+
+        remaining = final_answer[len(emitted_answer_text) :]
+        if remaining:
+            yield {"type": "token", "content": remaining}
 
 
 __all__ = ["ChatService"]
